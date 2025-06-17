@@ -189,9 +189,6 @@ final class WPMarkdown_Plugin {
 				$mermaid_code = trim( $matches[1] );
 				// Restore <br> to line breaks to prevent WordPress from breaking Mermaid syntax
 				$mermaid_code = preg_replace('/<br\s*\/?>/i', "\n", $mermaid_code);
-				// Restore en dash (–) to -- and em dash (—) to --- in case of smart punctuation conversion
-				// $mermaid_code = str_replace('–', '--', $mermaid_code);
-				// $mermaid_code = str_replace('—', '---', $mermaid_code);
 				// Security: Remove all HTML tags to prevent XSS
 				$mermaid_code = strip_tags($mermaid_code);
 				// Only allow blocks that start with supported Mermaid syntax
@@ -256,6 +253,9 @@ final class WPMarkdown_Plugin {
 	public function render_settings_page(): void {
 		?>
 		<div class="wrap">
+			<div style="text-align:center;margin-bottom:24px;">
+				<img src="<?php echo esc_url( plugins_url('logo.svg', __FILE__) ); ?>" alt="WP Markdown Logo" style="width:96px;height:96px;object-fit:contain;display:inline-block;" />
+			</div>
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			
 			<div class="card">

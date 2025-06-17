@@ -7,7 +7,11 @@
 [![PHP Version](https://img.shields.io/badge/PHP-7.2+-blue.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v2%2B-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 
-A modern WordPress plugin for handling Markdown processing with support for Markdown Extra features.
+A modern WordPress plugin for handling Markdown processing with support for Markdown Extra features and Mermaid diagrams.
+
+## Version
+
+**Current Version:** 2.0.7
 
 ## Features
 
@@ -19,6 +23,11 @@ A modern WordPress plugin for handling Markdown processing with support for Mark
 * No external dependencies
 * Compatible with WordPress 5.2 and higher
 * Secure and well-tested code
+* Supports Mermaid diagram blocks (```mermaid ... ```)
+* Automatically loads Mermaid.js for diagram rendering
+* Security: All HTML tags inside Mermaid blocks are stripped to prevent XSS
+* Only allows Mermaid blocks that start with supported diagram types
+* Adds a settings page under "Settings > WP Markdown" in the WordPress admin
 
 ### Markdown Extra Features
 
@@ -57,9 +66,27 @@ This is a paragraph with **bold** and *italic* text.
 
 ## Installation
 
-1. Upload the `wp-markdown` folder to the `/wp-content/plugins/` directory
+1. Upload the `WPMarkdown` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Start writing your content using Markdown syntax
+3. Go to "Settings > WP Markdown" to view plugin information and usage guide
+
+## Usage
+
+* Write your posts or comments using Markdown syntax. The plugin will automatically convert it to HTML.
+* To use Mermaid diagrams, add a code block like this:
+
+    ```mermaid
+    graph TD;
+        A[Start] --> B[Process];
+        B --> C[End];
+    ```
+
+* The plugin will render the diagram using Mermaid.js on the frontend.
+
+## Security
+
+* All HTML tags inside Mermaid blocks are stripped for security.
+* Only blocks starting with supported Mermaid diagram types are rendered.
 
 ## Frequently Asked Questions
 
@@ -87,12 +114,14 @@ Yes, the plugin uses the well-tested PHP Markdown & Extra library and follows Wo
 
 ## Changelog
 
-### 2.0.0
-* Initial release
-* Full Markdown Extra support
-* WordPress 5.2+ compatibility
-* PHP 7.2+ requirement
-* Security-focused implementation
+### 2.0.7
+* Update: Improved Mermaid block handling and security.
+* Update: English comments and documentation.
+* Fix: Prevent WordPress smart punctuation from breaking Mermaid syntax.
+
+### 2.0.0 - 2.0.6
+* Initial support for Markdown Extra and Mermaid diagrams.
+* Added settings page and core information display.
 
 ## Upgrade Notice
 
@@ -103,6 +132,7 @@ Initial release of WP Markdown with full Markdown Extra support.
 
 This plugin is based on PHP Markdown & Extra by Michel Fortin.
 Original Markdown by John Gruber.
+Mermaid.js by Kite.
 
 ## License
 
@@ -112,6 +142,8 @@ WP Markdown is based on PHP Markdown & Extra
 Copyright (c) 2004-2013 Michel Fortin <http://michelf.ca/>
 Based on Markdown
 Copyright (c) 2003-2006 John Gruber <http://daringfireball.net/>
+Mermaid.js
+Copyright (c) 2013-2023 Kite <https://kite.com/>
 
 ## Contributing
 

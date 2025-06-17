@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Icons</title>
+</head>
+<body>
+  <canvas id="canvas" width="128" height="128" style="display: none;"></canvas>
+  <script>
+    const sizes = [16, 48, 128];
+    const svg = `
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景白色圓角矩形 -->
+  <rect x="10" y="10" width="108" height="108" rx="24" fill="#fff" stroke="#111" stroke-width="3.5"/>
+  <!-- Markdown 的 M（整體等比例放大） -->
+  <path d="M42 89V43H56L68 65L80 43H94V89" stroke="#111" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- M右側陰影線條（黑色，細一半，x=104） -->
+  <line x1="104" y1="43" x2="104" y2="89" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- DA2 英文字母（等比例調整，位置同樣偏右） -->
+  <text x="74" y="114" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#111" font-weight="bold" letter-spacing="4">DA2</text>
+</svg>
+
+    `;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new window.Image();
+    const svgBlob = new Blob([svg], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = function() {
+      sizes.forEach(size => {
+        canvas.width = size;
+        canvas.height = size;
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+
+        const link = document.createElement('a');
+        link.download = `icon${size}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  </script>
+</body>
+</html>
