@@ -3,7 +3,7 @@
  * Plugin Name:       WP Markdown
  * Plugin URI:        https://da2.35g.tw/
  * Description:       A modern WordPress plugin for handling Markdown processing with support for Markdown Extra features.
- * Version:           2.0.2
+ * Version:           2.0.7
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Danny
@@ -21,7 +21,7 @@
  */
 
 // 版本資訊
-define( 'WPMARKDOWN_VERSION', '2.0.2' );
+define( 'WPMARKDOWN_VERSION', '2.0.7' );
 define( 'WPMARKDOWN_MERMAID_VERSION', '10.6.1' );
 
 // If this file is called directly, abort.
@@ -130,6 +130,8 @@ final class WPMarkdown_Plugin {
 		remove_filter( 'the_excerpt', 'wpautop' );
 		remove_filter( 'comment_text', 'wpautop', 30 );
 		remove_filter( 'comment_text', 'make_clickable' );
+		remove_filter('the_content', 'wptexturize');//文章標題不再自動美化標點，保留原始內容。
+		remove_filter('the_title', 'wptexturize');//文章標題不再自動美化標點，保留原始內容。
 	}
 
 	/**
@@ -185,11 +187,22 @@ final class WPMarkdown_Plugin {
 			'/```mermaid\n(.*?)\n```/s',
 			function( $matches ) {
 				$mermaid_code = trim( $matches[1] );
-				return '<div class="mermaid">' . esc_html( $mermaid_code ) . '</div>';
+				// Restore <br> to line breaks to prevent WordPress from breaking Mermaid syntax
+				$mermaid_code = preg_replace('/<br\s*\/?>/i', "\n", $mermaid_code);
+				// Restore en dash (–) to -- and em dash (—) to --- in case of smart punctuation conversion
+				// $mermaid_code = str_replace('–', '--', $mermaid_code);
+				// $mermaid_code = str_replace('—', '---', $mermaid_code);
+				// Security: Remove all HTML tags to prevent XSS
+				$mermaid_code = strip_tags($mermaid_code);
+				// Only allow blocks that start with supported Mermaid syntax
+				if (!preg_match('/^(graph|sequenceDiagram|flowchart|classDiagram|stateDiagram|erDiagram|journey|gantt)/', trim($mermaid_code))) {
+					return '';
+				}
+				// Output the processed code inside the mermaid block
+				return '<div class="mermaid">' . $mermaid_code . '</div>';
 			},
 			$content
 		);
-
 		return $this->parser->transform( $content );
 	}
 
