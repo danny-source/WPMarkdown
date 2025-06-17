@@ -3,7 +3,7 @@
  * Plugin Name:       WP Markdown
  * Plugin URI:        https://da2.35g.tw/
  * Description:       A modern WordPress plugin for handling Markdown processing with support for Markdown Extra features.
- * Version:           2.0.0
+ * Version:           2.0.2
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Danny
@@ -19,6 +19,10 @@
  * Based on Markdown
  * Copyright (c) 2003-2006 John Gruber <http://daringfireball.net/>
  */
+
+// 版本資訊
+define( 'WPMARKDOWN_VERSION', '2.0.2' );
+define( 'WPMARKDOWN_MERMAID_VERSION', '10.6.1' );
 
 // If this file is called directly, abort.
 if ( ! defined( 'WPINC' ) ) {
@@ -75,7 +79,6 @@ final class WPMarkdown_Plugin {
 	 * Define plugin constants.
 	 */
 	private function define_constants(): void {
-		define( 'WPMARKDOWN_VERSION', '2.0.0' );
 		define( 'WPMARKDOWN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		define( 'WPMARKDOWN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 	}
@@ -95,6 +98,17 @@ final class WPMarkdown_Plugin {
 	private function register_hooks(): void {
 		// Load text domain for translations
 		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
+
+		// Add Mermaid.js script
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_mermaid_script' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_mermaid_script' ] );
+
+		// 添加設定頁面
+		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+		add_action( 'admin_init', [ $this, 'register_settings' ] );
+
+		// 在外掛列表加入 Settings 連結
+		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), [ $this, 'add_settings_link' ] );
 
 		// Post content and excerpts
 		add_filter( 'the_content', [ $this, 'render_markdown_content' ], 6 );
@@ -130,6 +144,25 @@ final class WPMarkdown_Plugin {
 	}
 
 	/**
+	 * Enqueue Mermaid.js script
+	 */
+	public function enqueue_mermaid_script(): void {
+		wp_enqueue_script(
+			'mermaid',
+			'https://cdn.jsdelivr.net/npm/mermaid@' . WPMARKDOWN_MERMAID_VERSION . '/dist/mermaid.min.js',
+			[],
+			WPMARKDOWN_MERMAID_VERSION,
+			true
+		);
+
+		// Initialize Mermaid
+		wp_add_inline_script(
+			'mermaid',
+			'mermaid.initialize({ startOnLoad: true });'
+		);
+	}
+
+	/**
 	 * Process content with Markdown parser.
 	 *
 	 * @param string $content The original content.
@@ -146,6 +179,16 @@ final class WPMarkdown_Plugin {
 		} else {
 			$this->parser->fn_id_prefix = get_the_ID() . '.';
 		}
+
+		// 處理 Mermaid 代碼塊
+		$content = preg_replace_callback(
+			'/```mermaid\n(.*?)\n```/s',
+			function( $matches ) {
+				$mermaid_code = trim( $matches[1] );
+				return '<div class="mermaid">' . esc_html( $mermaid_code ) . '</div>';
+			},
+			$content
+		);
 
 		return $this->parser->transform( $content );
 	}
@@ -172,6 +215,91 @@ final class WPMarkdown_Plugin {
 	 */
 	public function strip_paragraph_tags( string $text ): string {
 		return preg_replace( '{</?p>}i', '', $text );
+	}
+
+	/**
+	 * 添加設定頁面到 WordPress 後台選單
+	 */
+	public function add_admin_menu(): void {
+		add_options_page(
+			'WP Markdown Settings', // 頁面標題
+			'WP Markdown',          // 選單標題
+			'manage_options',       // 權限
+			'wp-markdown',          // 選單 slug
+			[ $this, 'render_settings_page' ] // 回調函數
+		);
+	}
+
+	/**
+	 * 註冊設定
+	 */
+	public function register_settings(): void {
+		register_setting( 'wp_markdown_settings', 'wp_markdown_settings' );
+	}
+
+	/**
+	 * 渲染設定頁面
+	 */
+	public function render_settings_page(): void {
+		?>
+		<div class="wrap">
+			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			
+			<div class="card">
+				<h2>Core Components Information</h2>
+				<table class="form-table">
+					<tr>
+						<th scope="row">Author</th>
+						<td>
+							<p>Danny</p>
+							<p>Website: <a href="https://da2.35g.tw" target="_blank">https://da2.35g.tw</a></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">Plugin Version</th>
+						<td><?php echo esc_html( WPMARKDOWN_VERSION ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row">Markdown Extra</th>
+						<td>
+							<p>Based on PHP Markdown & Extra</p>
+							<p>Copyright (c) 2004-2013 Michel Fortin <a href="http://michelf.ca/" target="_blank">http://michelf.ca/</a></p>
+							<p>Based on Markdown</p>
+							<p>Copyright (c) 2003-2006 John Gruber <a href="http://daringfireball.net/" target="_blank">http://daringfireball.net/</a></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">Mermaid.js</th>
+						<td>
+							<p>Version: <?php echo esc_html( WPMARKDOWN_MERMAID_VERSION ); ?></p>
+							<p>Used for rendering Mermaid diagrams</p>
+							<p>Source: <a href="https://mermaid.js.org/" target="_blank">https://mermaid.js.org/</a></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="card">
+				<h2>Usage Guide</h2>
+				<p>Write your content using Markdown syntax in posts or pages, and the plugin will automatically convert it to HTML.</p>
+				<p>Mermaid diagram syntax is supported. Usage example:</p>
+				<pre><code>```mermaid
+graph TD;
+    A[Start] --> B[Process];
+    B --> C[End];
+```</code></pre>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * 在外掛列表加入 Settings 連結
+	 */
+	public function add_settings_link( $links ) {
+		$settings_link = '<a href="options-general.php?page=wp-markdown">Settings</a>';
+		array_unshift( $links, $settings_link );
+		return $links;
 	}
 
 	/**
